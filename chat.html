@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset = "UTF-8">
+        <title>채팅 클라이언트</title>
+        
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        
+        <script>
+            var socket;
+            $(function() {
+                
+            });
+            
+            function connect() {
+                var host = $('#hostInput').val();
+                var port = $('#portInput').val();
+                
+                connectToServer(host, port);
+            }
+            
+            function connectToServer(host, port) {
+                var url = 'http://' + host + ":" + port;
+                var options = {
+                    forceNew:true
+                };
+                
+                socket = io.connect(url, options);
+                
+                socket.on('connect', function(){
+                    println('웹소켓 서버에 연결됨 -> ' + url);
+                });
+                
+                socket.on('disconnect', function(){
+                    println('웹소켓 연결 종료됨.');
+                });
+                
+                socket.on('message', function(message){
+                   println('수신 -> ' + JSON.stringify(message.data)); 
+                });
+                
+                socket.on('response', function(input) {
+                    println(JSON.stringify(input.command) + ' 성공 여부 -> ' + JSON.stringify(input.message));
+                });
+                
+            }
+            
+            function login(){
+                var id = $('#idInput').val();
+                
+                var output = {
+                    id:id
+                };
+                
+                socket.emit('login', output);
+            }
+            
+            function send(){
+                var sender = $('#senderInput').val();
+                var recepient = $('#recepientInput').val();
+                var data = $('#dataInput').val();
+                
+                var message = {
+                    sender:sender,
+                    recepient:recepient,
+                    command:'chat',
+                    type:'text',
+                    data:data
+                };
+                
+                socket.emit('message', message);
+            }
+            
+            function println(data){
+                console.log(data);
+                $('#results').append('<p>' + data + '</p>');
+            }
+            
+        </script>
+    </head>
+    <body>
+        <h3>채팅 클라이언트</h3>
+        <br>
+        <div>
+            <h5>서버 연결</h5>
+            <input type="text" id="hostInput" value="localhost">
+            <input type="text" id="portInput" value="3000">
+            <input type="button" id="connectButton" value="연결하기" onclick="connect()">
+        </div>
+        <br>
+        <br>
+        <div>
+            <h5>로그인</h5>
+            <input type="text" id="idInput" value="type your id">
+            <input type="button" id="loginButton" value="로그인" onclick="login()">
+        </div>
+        <br>
+        <br>
+    
+        <div>
+            <h5>메시지 전송</h5>
+            <div>
+                <span>보내는 사람 ID : </span>
+                <input type="text" id="senderInput" >
+            </div>
+            <div>
+                <span>받는 사람 ID : </span>
+                <input type="text" id="recepientInput" >
+            </div>
+            <div>
+                <span>전송할 데이터 : </span>
+                <input type="text" id="dataInput" value="안녕!" >
+            </div>
+            <br>
+            <input type="button" id="sendButton" value="전송" onclick="send()">
+        </div>
+        <hr>
+        <p>결과</p>
+        <div id="results"></div>
+    </body>
+</html>
